@@ -52,6 +52,9 @@ public sealed class NoGpuPower : IGpuPower
     public int? DefaultWatts => null;
     public void SetLimitPercent(int percent) { }
     public void SetLimitWatts(int watts) => throw new InvalidOperationException("no GPU power control available");
+    public bool ClockLockSupported => false;
+    public void LockMaxClock(int mhz) => throw new InvalidOperationException("no GPU clock control available");
+    public void ResetClocks() { }
 }
 
 /// <summary>Probes the GPU the first time it is used, so app start-up never waits on nvidia-smi.</summary>
@@ -70,6 +73,9 @@ public sealed class LazyGpuPower : IGpuPower
     public int? DefaultWatts => _inner.Value.DefaultWatts;
     public void SetLimitPercent(int percent) => _inner.Value.SetLimitPercent(percent);
     public void SetLimitWatts(int watts) => _inner.Value.SetLimitWatts(watts);
+    public bool ClockLockSupported => _inner.Value.ClockLockSupported;
+    public void LockMaxClock(int mhz) => _inner.Value.LockMaxClock(mhz);
+    public void ResetClocks() => _inner.Value.ResetClocks();
 }
 
 /// <summary>
@@ -80,14 +86,17 @@ public sealed class NvidiaGpuPower : IGpuPower
 {
     private readonly string _smi;
     private readonly int _minW, _maxW;
+    private readonly Lazy<bool> _clockLock;
 
     public bool Supported { get; }
     public int? DefaultWatts { get; }
+    public bool ClockLockSupported => _clockLock.Value;
 
     /// <summary>Probes the GPU. Slow (spawns nvidia-smi twice), so create it once, off the UI thread.</summary>
     public NvidiaGpuPower(string smiPath)
     {
         _smi = smiPath;
+        _clockLock = new Lazy<bool>(ProbeClockLock);
         try
         {
             var q = NvidiaSmi.Run(smiPath, "--query-gpu=power.min_limit,power.max_limit,power.default_limit --format=csv,noheader,nounits");
@@ -104,7 +113,7 @@ public sealed class NvidiaGpuPower : IGpuPower
         catch (FormatException) { Supported = false; } // "[N/A]" and friends: this GPU has no power limit control
     }
 
-    private NvidiaGpuPower(string smiPath, bool recovery) { _smi = smiPath; Supported = true; }
+    private NvidiaGpuPower(string smiPath, bool recovery) { _smi = smiPath; Supported = true; _clockLock = new Lazy<bool>(true); }
 
     /// <summary>For crash recovery: no probing, just enough to set a wattage that was journaled earlier.</summary>
     public static NvidiaGpuPower? ForRecovery()
@@ -125,14 +134,39 @@ public sealed class NvidiaGpuPower : IGpuPower
         if (!SetAccepted(watts)) throw new InvalidOperationException($"nvidia-smi did not accept a {watts} W power limit");
     }
 
-    private bool SetAccepted(int watts)
+    public void LockMaxClock(int mhz)
     {
-        var r = NvidiaSmi.Run(_smi, $"-pl {watts}");
+        if (!Accepted($"-lgc 0,{mhz}")) throw new InvalidOperationException($"nvidia-smi did not accept a {mhz} MHz clock limit");
+    }
+
+    public void ResetClocks()
+    {
+        if (!Accepted("-rgc")) throw new InvalidOperationException("nvidia-smi did not reset the GPU clocks");
+    }
+
+    /// <summary>Locks to the card's own maximum (changes nothing) and resets; only both working counts as support.</summary>
+    private bool ProbeClockLock()
+    {
+        var q = NvidiaSmi.Run(_smi, "--query-gpu=clocks.max.graphics --format=csv,noheader,nounits");
+        if (q is null || !int.TryParse(q.Value.Stdout.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var max) || max <= 0)
+            return false;
+        bool locked = Accepted($"-lgc 0,{max}");
+        bool reset = Accepted("-rgc");
+        return locked && reset;
+    }
+
+    private bool SetAccepted(int watts) => Accepted($"-pl {watts}");
+
+    private bool Accepted(string args)
+    {
+        var r = NvidiaSmi.Run(_smi, args);
         if (r is null) return false;
         var text = r.Value.Stdout + r.Value.Stderr;
         return !text.Contains("not supported", StringComparison.OrdinalIgnoreCase)
             && !text.Contains("not permitted", StringComparison.OrdinalIgnoreCase)
-            && !text.Contains("unable to set", StringComparison.OrdinalIgnoreCase);
+            && !text.Contains("insufficient permissions", StringComparison.OrdinalIgnoreCase)
+            && !text.Contains("unable to", StringComparison.OrdinalIgnoreCase)
+            && !text.Contains("invalid", StringComparison.OrdinalIgnoreCase);
     }
 
     private static float ParseW(string s) => float.Parse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture);

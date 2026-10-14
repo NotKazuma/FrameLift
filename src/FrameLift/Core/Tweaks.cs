@@ -7,6 +7,8 @@ public sealed record RegChange(string Path, string Name, string Kind, string Dat
 /// <summary>Sets a service's start type (2 auto, 3 manual, 4 disabled) and stops it if running.</summary>
 public sealed record ServiceChange(string Service, int StartType) : Change;
 public sealed record PowerChange(Guid Template) : Change;
+/// <summary>A processor setting on the active plan, only ever moved toward efficiency (see <see cref="PowerSettings.Resolve"/>).</summary>
+public sealed record PowerSettingChange(PowerTarget Target) : Change;
 
 public sealed record TweakDef(
     string Id, string Category, string Title, string Description, Risk Risk, bool NeedsSignOut, params Change[] Changes);
@@ -52,6 +54,11 @@ public static class TweakCatalog
         new("power-high", "Gaming", "High Performance power plan",
             "Keeps the CPU from down-clocking mid game. Runs hotter, so watch temperatures on a laptop.", Risk.Low, false,
             new PowerChange(HighPerformance)),
+        new("cpu-rest", "Gaming", "Let the CPU rest when idle",
+            "Lowers the plan's minimum processor state and lets idle cores sleep deeply. The CPU still reaches full speed in games, but stops running hot while doing nothing.", Risk.Low, false,
+            new PowerSettingChange(new(PowerSettings.MinState, 5)),
+            new PowerSettingChange(new(PowerSettings.IdleDemote, 40)),
+            new PowerSettingChange(new(PowerSettings.IdlePromote, 60))),
 
         // Background
         new("bg-apps", "Background", "Stop apps running in the background",

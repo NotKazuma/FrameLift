@@ -151,32 +151,36 @@ public sealed class PowercfgPower : IPower
         return false;
     }
 
-    // "Maximum processor state" lives under the Processor power subgroup.
-    private static readonly Guid SubProcessor = new("54533251-82be-4824-96c1-47b60b740d00");
-    private static readonly Guid ProcThrottleMax = new("bc5038f7-23e0-4960-96da-33abaf5935ec");
-
     private static void Check(uint rc, string what)
     {
         if (rc != 0) throw new System.ComponentModel.Win32Exception((int)rc, $"Power setting {what} failed (error {rc})");
     }
 
-    public int GetCpuMaxPercent(Guid scheme, bool ac)
+    public int GetCpuMaxPercent(Guid scheme, bool ac) => Read(scheme, PowerSettings.SubProcessor, PowerSettings.MaxState, ac, "CPU max");
+
+    public void SetCpuMaxPercent(Guid scheme, bool ac, int percent) =>
+        Write(scheme, PowerSettings.SubProcessor, PowerSettings.MaxState, ac, Math.Clamp(percent, 1, 100), "CPU max");
+
+    public int GetSetting(Guid scheme, Guid sub, Guid setting, bool ac) => Read(scheme, sub, setting, ac, setting.ToString());
+
+    public void SetSetting(Guid scheme, Guid sub, Guid setting, bool ac, int value) => Write(scheme, sub, setting, ac, value, setting.ToString());
+
+    private static int Read(Guid scheme, Guid sub, Guid set, bool ac, string what)
     {
-        var sub = SubProcessor; var set = ProcThrottleMax;
         uint v;
         Check(ac ? NativeMethods.PowerReadACValueIndex(IntPtr.Zero, ref scheme, ref sub, ref set, out v)
                  : NativeMethods.PowerReadDCValueIndex(IntPtr.Zero, ref scheme, ref sub, ref set, out v),
-              $"read of CPU max ({(ac ? "AC" : "DC")}) on {scheme}");
+              $"read of {what} ({(ac ? "AC" : "DC")}) on {scheme}");
         return (int)v;
     }
 
-    public void SetCpuMaxPercent(Guid scheme, bool ac, int percent)
+    private static void Write(Guid scheme, Guid sub, Guid set, bool ac, int value, string what)
     {
-        var sub = SubProcessor; var set = ProcThrottleMax;
-        uint v = (uint)Math.Clamp(percent, 1, 100);
+        if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), $"Power setting {what} cannot be negative ({value})");
+        uint v = (uint)value;
         Check(ac ? NativeMethods.PowerWriteACValueIndex(IntPtr.Zero, ref scheme, ref sub, ref set, v)
                  : NativeMethods.PowerWriteDCValueIndex(IntPtr.Zero, ref scheme, ref sub, ref set, v),
-              $"write of CPU max ({(ac ? "AC" : "DC")}) on {scheme}");
+              $"write of {what} ({(ac ? "AC" : "DC")}) on {scheme}");
     }
 
     public void Reapply(Guid scheme) =>

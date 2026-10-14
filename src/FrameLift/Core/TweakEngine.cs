@@ -65,6 +65,14 @@ public sealed class TweakEngine
                     break;
             }
         }
+
+        var power = t.Changes.OfType<PowerSettingChange>().Select(p => p.Target).ToList();
+        if (power.Count > 0)
+        {
+            var failures = new List<string>();
+            n += PowerSettingWriter.Apply(_power, _journal, owner, _power.GetActiveScheme(), power, failures);
+            if (failures.Count > 0 && n == 0) throw new InvalidOperationException(string.Join("; ", failures));
+        }
         return n;
     }
 

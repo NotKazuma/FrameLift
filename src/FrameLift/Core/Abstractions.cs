@@ -33,6 +33,9 @@ public interface IPower
     /// <summary>The plan's "maximum processor state" in percent, for mains (<paramref name="ac"/>) or battery.</summary>
     int GetCpuMaxPercent(Guid scheme, bool ac);
     void SetCpuMaxPercent(Guid scheme, bool ac, int percent);
+    /// <summary>Any plan setting by subgroup and setting GUID, for mains (<paramref name="ac"/>) or battery.</summary>
+    int GetSetting(Guid scheme, Guid sub, Guid setting, bool ac);
+    void SetSetting(Guid scheme, Guid sub, Guid setting, bool ac, int value);
     /// <summary>Makes the plan's current values take effect (only needed when it is the active plan).</summary>
     void Reapply(Guid scheme);
 }
@@ -46,6 +49,12 @@ public interface IGpuPower
     int? DefaultWatts { get; }
     void SetLimitPercent(int percent);
     void SetLimitWatts(int watts);
+    /// <summary>True only after a real lock-and-reset probe worked: many laptop GPUs refuse clock locks.</summary>
+    bool ClockLockSupported { get; }
+    /// <summary>Keeps the GPU core clock at or below this, cutting the highest-voltage boost steps.</summary>
+    void LockMaxClock(int mhz);
+    /// <summary>Back to the driver's own clock behaviour.</summary>
+    void ResetClocks();
 }
 
 public interface IProcessOps

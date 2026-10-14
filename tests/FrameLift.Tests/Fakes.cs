@@ -45,6 +45,32 @@ public sealed class FakePower : IPower
         Caps[(scheme, ac)] = percent;
     }
     public void Reapply(Guid scheme) => Reapplies++;
+
+    /// <summary>Starting values for every plan: the user's real "KernelOS" plan, which never lets the CPU rest.</summary>
+    public readonly Dictionary<Guid, int> SettingDefaults = new()
+    {
+        [PowerSettings.MinState] = 100, [PowerSettings.Epp] = 0, [PowerSettings.BoostMode] = 2,
+        [PowerSettings.IdlePromote] = 100, [PowerSettings.IdleDemote] = 100, [PowerSettings.CoolingPolicy] = 0,
+    };
+    public readonly Dictionary<(Guid Scheme, Guid Setting, bool Ac), int> Settings = new();
+    /// <summary>Settings this "PC" does not have: reads and writes fail like the real API does.</summary>
+    public readonly HashSet<Guid> MissingSettings = new();
+    public int SettingWrites;
+
+    public int GetSetting(Guid scheme, Guid sub, Guid setting, bool ac)
+    {
+        if (MissingSettings.Contains(setting)) throw new InvalidOperationException("setting not on this plan");
+        if (setting == PowerSettings.MaxState) return GetCpuMaxPercent(scheme, ac);
+        return Settings.TryGetValue((scheme, setting, ac), out var v) ? v : SettingDefaults.GetValueOrDefault(setting);
+    }
+
+    public void SetSetting(Guid scheme, Guid sub, Guid setting, bool ac, int value)
+    {
+        if (MissingSettings.Contains(setting)) throw new InvalidOperationException("setting not on this plan");
+        SettingWrites++;
+        if (setting == PowerSettings.MaxState) { SetCpuMaxPercent(scheme, ac, value); return; }
+        Settings[(scheme, setting, ac)] = value;
+    }
 }
 
 public sealed class FakeGpu : IGpuPower
@@ -55,6 +81,17 @@ public sealed class FakeGpu : IGpuPower
     public int Sets;
     public void SetLimitPercent(int percent) { LimitWatts = (int)Math.Round(DefaultWatts!.Value * percent / 100.0); Sets++; }
     public void SetLimitWatts(int watts) { LimitWatts = watts; Sets++; }
+
+    public bool ClockLockSupported { get; set; } = true;
+    public bool FailClockLock;
+    public int? LockedMhz;
+    public int ClockResets;
+    public void LockMaxClock(int mhz)
+    {
+        if (FailClockLock) throw new InvalidOperationException("clock lock refused");
+        LockedMhz = mhz;
+    }
+    public void ResetClocks() { LockedMhz = null; ClockResets++; }
 }
 
 public sealed class FakeProcs : IProcessOps

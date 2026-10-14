@@ -26,6 +26,28 @@ public sealed class ThermalLimits
     public int Cooldown { get; set; } = 5;
     public int SuspendMs { get; set; } = 1500;
 
+    /// <summary>
+    /// Below Critical, hold the temperature near a target with small steps instead of the Warm/Hot jumps: the highest
+    /// speed the cooling can sustain, rather than swinging between full speed and a hard cap.
+    /// </summary>
+    public bool SmoothControl { get; set; } = true;
+    public int CpuTarget { get; set; } = 88;
+    public int GpuTarget { get; set; } = 80;
+    /// <summary>At most one step per this many seconds: writing power settings on every poll stalled the power API.</summary>
+    public int StepSeconds { get; set; } = 6;
+    /// <summary>Step down at target + this, step back up at target - <see cref="StepUpMargin"/>; in between, hold.</summary>
+    public int StepDownMargin { get; set; } = 2;
+    public int StepUpMargin { get; set; } = 4;
+    /// <summary>This far under both targets, the climb back runs at twice the step rate.</summary>
+    public int FastClimbMargin { get; set; } = 12;
+    /// <summary>After this long without overheating, the learned speed ceiling is raised one step.</summary>
+    public int CeilingRelaxSeconds { get; set; } = 90;
+    public int CapFloor { get; set; } = 40;
+    public int GpuPowerStep { get; set; } = 5;
+    public int GpuPowerFloor { get; set; } = 60;
+    /// <summary>GPU power limit kept for the whole Boost session when Cool Boost is on (percent of default).</summary>
+    public int GpuPowerBaseline { get; set; } = 90;
+
     public int CapFor(ThermalLevel l) => l switch
     {
         ThermalLevel.Warm => CapWarm, ThermalLevel.Hot => CapHot, ThermalLevel.Critical => CapCritical, _ => 100,

@@ -17,8 +17,9 @@ Windows tray app.
 | Feature | What you get |
 |---|---|
 | **Game Boost** | Starts by itself when a game goes fullscreen (or with one click). Switches to a performance power plan, raises the game's priority, slows background apps, and frees standby memory again when it fills up. Everything goes back when the game ends. |
-| **Heat protection** | While Boost is on, it watches CPU and GPU temperature and lowers the CPU maximum state and the NVIDIA power limit before the PC throttles or shuts down. It only ever lowers a limit, and puts it back when things cool down. |
-| **PC health check** | One page showing what slows the PC down: power plan, Game Mode, background game recording, startup apps, disk space, memory and page file, junk files and temperature. Each finding has a one-click fix where one exists. |
+| **Cool Boost** | Part of Game Boost: cuts heat that makes no frames. Lets the CPU clock down and sleep between frames instead of idling at full turbo, makes turbo kick in only when the game needs it, asks for the fan before throttling, and trims the GPU's hottest clocks where the driver allows it. A plan whose hidden low maximum was masked by a 100 % minimum keeps its real top speed. |
+| **Heat protection** | While Boost is on, it holds the CPU near a target temperature (88 °C by default) with small steps instead of swinging between full speed and a hard cap. The first step only turns turbo off. If it ever reaches the critical level it cuts hard, then climbs back to one step below the speed that overheated, so the overheat does not repeat. It only ever lowers a limit, and puts everything back when Boost stops. |
+| **PC health check** | One page showing what slows the PC down: power plan, a CPU that never rests (full speed while idle), Game Mode, background game recording, startup apps, disk space, memory and page file, junk files and temperature. Each finding has a one-click fix where one exists. |
 | **Profiles** | Light, Balanced, Heavy and Maximum bundles of tweaks. You see every change before it is made. |
 | **Cleanup, Tweaks, Startup apps** | Delete junk files, flip individual Windows tweaks, and turn startup apps off without uninstalling them. |
 | **Tray** | Open, start or stop Boost, quit. Closing the window hides it to the tray. Can start with Windows. |
@@ -72,7 +73,7 @@ stands down automatically while the ThermalGuard app is running, so two limiters
 
 ## Known limits
 - **It does not cool your PC.** Heat protection stops a throttle or shutdown; sustained high temperatures in games point to dust, dried thermal paste or a weak fan, which software cannot fix.
-- GPU power limiting works only on NVIDIA cards that allow it. Some laptop GPUs report a range but refuse to set it, and then FrameLift simply skips that lever.
+- GPU power and clock limits work only on NVIDIA cards that allow them. Many laptop GPUs (the GTX 1060 it was tested on included) refuse both, and then FrameLift simply skips them; heat protection then works through the CPU alone.
 - Tested on one machine so far (an i7-6700HQ / GTX 1060 laptop on Windows 10). Not yet tested on AMD, on desktops, or across a long run of real game sessions.
 - The exe is unsigned, so SmartScreen will warn. The hardware-monitor driver can be flagged by some antivirus tools, and some anti-cheat systems object to it.
 

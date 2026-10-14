@@ -93,6 +93,7 @@ public sealed class GameBoost
     private readonly Reverter _reverter;
     private readonly Func<AppConfig> _cfg;
     private readonly HeatGuard? _heat;
+    private readonly EfficiencyTuner? _tuner;
     private readonly Func<DateTime> _now;
     private readonly HashSet<int> _suppressed = new();
     private DateTime _lastPurge = DateTime.MinValue;
@@ -104,12 +105,15 @@ public sealed class GameBoost
     public long FreedMb { get; private set; }
     /// <summary>How many times standby memory was freed during this session, including the one at the start.</summary>
     public int Purges { get; private set; }
+    /// <summary>What Cool Boost could not change this session, or null.</summary>
+    public string? EfficiencyNote => _tuner?.Note;
 
     public GameBoost(IProcessOps ops, IPower power, IMemoryApi mem, Journal journal, Reverter reverter, Func<AppConfig> cfg,
-        HeatGuard? heat = null, Func<DateTime>? now = null)
+        HeatGuard? heat = null, Func<DateTime>? now = null, EfficiencyTuner? tuner = null)
     {
         _ops = ops; _power = power; _mem = mem; _journal = journal; _reverter = reverter; _cfg = cfg;
         _heat = heat;
+        _tuner = tuner;
         _now = now ?? (() => DateTime.UtcNow);
     }
 
@@ -159,6 +163,9 @@ public sealed class GameBoost
                 _power.SetActiveScheme(target);
             }
         }
+
+        // After the plan switch, so Cool Boost tunes the plan the game will actually run on.
+        if (cfg.BoostEfficiency) _tuner?.Apply(cfg);
 
         if (game is not null)
         {

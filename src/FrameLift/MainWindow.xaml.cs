@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -100,6 +100,7 @@ public partial class MainWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AutoBoostCheck.IsChecked = S.Config.AutoBoost;
+        OptEfficiency.IsChecked = S.Config.BoostEfficiency;
         OptPower.IsChecked = S.Config.BoostSwitchPowerPlan;
         OptMemory.IsChecked = S.Config.BoostPurgeMemory;
         OptHeat.IsChecked = S.Config.ThermalEaseOff;
@@ -231,15 +232,27 @@ public partial class MainWindow : Window
         {
             HeatTitle.Text = "Heat protection";
             HeatText.Text = S.Config.ThermalEaseOff
-                ? "Watches temperatures while Game Boost is on and eases off before the PC throttles or shuts down."
+                ? "Eases off during Game Boost before the PC overheats."
                 : "Turned off in Safety & undo.";
             return;
         }
         if (h.Note is string note) { HeatTitle.Text = "Heat protection"; HeatText.Text = note; return; }
-        HeatTitle.Text = h.Level == ThermalLevel.Ok ? "Heat protection: watching" : $"Heat protection: {h.Level}";
-        HeatText.Text = h.Level == ThermalLevel.Ok
-            ? "Temperatures are fine. Power limits are untouched."
-            : $"CPU limited to {h.CpuCapPercent}% of its speed to bring the temperature down. Sustained heat in games points to dust or dried paste, which software cannot fix.";
+        var gpu = h.GpuPercent < 100 ? $", GPU power {h.GpuPercent}%" : "";
+        switch (h.Level)
+        {
+            case ThermalLevel.Ok:
+                HeatTitle.Text = "Heat protection: watching";
+                HeatText.Text = "Temperatures are fine. CPU at full speed" + gpu + ".";
+                break;
+            case ThermalLevel.Critical:
+                HeatTitle.Text = "Heat protection: near shutdown";
+                HeatText.Text = $"CPU cut to {h.CpuCapPercent}%{gpu} until it cools. Constant heat like this usually means dust or dried thermal paste.";
+                break;
+            default:
+                HeatTitle.Text = "Heat protection: holding";
+                HeatText.Text = $"Holding about {S.Config.Thermal.CpuTarget}°C: CPU at {h.CpuCapPercent}%{gpu}.";
+                break;
+        }
     }
 
     // ---- health -----------------------------------------------------------------------------------------
@@ -382,7 +395,8 @@ public partial class MainWindow : Window
             HeroTitle.Text = b.GameName is null ? "Game Boost is on" : $"Boosting {b.GameName}";
             HeroText.Text = $"{b.SuppressedCount} background apps slowed" +
                             (b.FreedMb > 0 ? $", {b.FreedMb:N0} MB of standby memory freed" : "") +
-                            ". Everything goes back to normal when you stop.";
+                            ". Everything goes back to normal when you stop." +
+                            (b.EfficiencyNote is string note ? " " + note : "");
             BoostButton.Content = "Stop Boost";
             SidebarStatus.Text = "Boost is on";
             SidebarStatus.Foreground = (Brush)FindResource("Good");
@@ -391,7 +405,7 @@ public partial class MainWindow : Window
         else
         {
             HeroTitle.Text = "Game Boost is off";
-            HeroText.Text = "Switches to the High Performance power plan, raises your game's priority, slows background apps and frees standby memory. Everything is put back when you stop.";
+            HeroText.Text = "Uses a fast power plan, puts your game first, slows background apps and frees memory. All undone when you stop.";
             BoostButton.Content = "Start Boost";
             SidebarStatus.Text = "Boost is off";
             SidebarStatus.Foreground = (Brush)FindResource("Text");
@@ -729,6 +743,7 @@ public partial class MainWindow : Window
     private void Option_Click(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
+        S.Config.BoostEfficiency = OptEfficiency.IsChecked == true;
         S.Config.BoostSwitchPowerPlan = OptPower.IsChecked == true;
         S.Config.BoostPurgeMemory = OptMemory.IsChecked == true;
         S.Config.ThermalEaseOff = OptHeat.IsChecked == true;
@@ -750,7 +765,7 @@ public partial class MainWindow : Window
     {
         var b = new Border
         {
-            Background = (Brush)FindResource("Card"), BorderBrush = (Brush)FindResource("Line"), BorderThickness = new Thickness(1),
+            Background = (Brush)FindResource("Card"),
             CornerRadius = new CornerRadius(12), Padding = new Thickness(18, 14, 18, 14), Margin = new Thickness(0, 0, 0, 8),
             Child = child,
         };

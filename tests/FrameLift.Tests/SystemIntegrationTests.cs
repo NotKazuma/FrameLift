@@ -75,6 +75,40 @@ public sealed class SystemIntegrationTests : IDisposable
     }
 
     [Fact]
+    public void Cool_Boost_settings_apply_and_restore_exactly_on_a_real_scratch_plan()
+    {
+        if (MakeScratchScheme() is not Guid s) return;
+        var dir = Path.Combine(Path.GetTempPath(), "fl-realcool-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var sub = PowerSettings.SubProcessor;
+            var watched = EfficiencyTuner.BoostTargets.Select(t => t.Setting).Append(PowerSettings.MaxState).ToList();
+            var before = watched.ToDictionary(g => g,
+                g => (Ac: _power.GetSetting(s, sub, g, true), Dc: _power.GetSetting(s, sub, g, false)));
+            var journal = new Journal(Path.Combine(dir, "j.json"));
+            var failures = new List<string>();
+
+            PowerSettingWriter.Apply(_power, journal, "boost", s, EfficiencyTuner.BoostTargets, failures);
+
+            Assert.Empty(failures);
+            foreach (var t in EfficiencyTuner.BoostTargets)
+                Assert.Equal(PowerSettings.Resolve(t.Setting, before[t.Setting].Ac, t.Value), _power.GetSetting(s, sub, t.Setting, true));
+            Assert.NotEqual(s, _power.GetActiveScheme()); // the PC's own plan was never switched
+
+            // The real ceiling (higher of min and max) never drops: games keep the speed they had.
+            Assert.True(_power.GetSetting(s, sub, PowerSettings.MaxState, true) >= Math.Max(before[PowerSettings.MinState].Ac, before[PowerSettings.MaxState].Ac));
+
+            var r = new Reverter(journal, new SystemRegistry(), new SystemServiceRunner(), _power, new SystemProcessOps());
+            r.RevertOwner("boost");
+
+            Assert.Empty(r.Failures);
+            foreach (var g in watched)
+                Assert.Equal(before[g], (_power.GetSetting(s, sub, g, true), _power.GetSetting(s, sub, g, false)));
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
     public void An_unknown_plan_reports_a_clear_error_instead_of_crashing()
     {
         var ex = Assert.Throws<System.ComponentModel.Win32Exception>(() => _power.GetCpuMaxPercent(Guid.NewGuid(), true));

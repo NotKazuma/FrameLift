@@ -131,6 +131,8 @@ public sealed class HeatGuardTests : IDisposable
     [Fact]
     public void Hot_reading_lowers_cpu_and_gpu_limits_and_cool_reading_puts_both_back()
     {
+        _cfg.BoostEfficiency = false; // no Cool Boost GPU baseline: cool means fully back to default
+        _cfg.Thermal.SmoothControl = false; // the plain ladder: back to full speed as soon as it is cool
         var scheme = _power.Active;
         _heat.Begin(0);
 

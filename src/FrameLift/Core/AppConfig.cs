@@ -26,6 +26,14 @@ public sealed class AppConfig
     public bool ThermalSuspendAtCritical { get; set; }
     public ThermalLimits Thermal { get; set; } = new();
 
+    /// <summary>
+    /// "Cool Boost": while boosting, let the CPU rest between frames (no 100 % minimum state, deeper idle, efficient
+    /// turbo, fan before throttling) and keep the GPU off its hottest steps. Less heat for the same frames.
+    /// </summary>
+    public bool BoostEfficiency { get; set; } = true;
+    /// <summary>GPU core clock ceiling during Boost, in MHz (0 = leave it). Only used when the card accepts clock locks.</summary>
+    public int BoostGpuClockMhz { get; set; } = 1700;
+
     public static string DefaultPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FrameLift", "config.json");
 

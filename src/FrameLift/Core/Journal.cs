@@ -14,6 +14,10 @@ public enum EntryKind
     GpuPowerLimit,
     /// <summary>A process was frozen: Pid + StartTicks identify it. Undo resumes it.</summary>
     ProcessSuspend,
+    /// <summary>A plan setting was changed: Name = "plan|subgroup|setting" GUIDs, Data = "ac|dc" values before.</summary>
+    PowerSetting,
+    /// <summary>The GPU core clock was capped. Undo hands clocks back to the driver.</summary>
+    GpuClockLock,
 }
 
 /// <summary>One thing we changed, with what it was before. Written to disk before the change is made.</summary>
@@ -180,6 +184,23 @@ public sealed class Reverter
                 break;
             case EntryKind.ProcessSuspend:
                 if (_proc.GetStartTicks(e.Pid) == e.StartTicks) _proc.Resume(e.Pid); // same process, not a reused pid
+                break;
+            case EntryKind.PowerSetting:
+            {
+                var ids = e.Name.Split('|');
+                var vals = e.Data.Split('|');
+                if (ids.Length != 3 || !Guid.TryParse(ids[0], out var scheme) || !Guid.TryParse(ids[1], out var sub)
+                    || !Guid.TryParse(ids[2], out var setting) || vals.Length != 2
+                    || !int.TryParse(vals[0], out var ac) || !int.TryParse(vals[1], out var dc))
+                    throw new FormatException($"Bad power setting entry: name '{e.Name}', data '{e.Data}'");
+                _power.SetSetting(scheme, sub, setting, true, ac);
+                _power.SetSetting(scheme, sub, setting, false, dc);
+                if (_power.GetActiveScheme() == scheme) _power.Reapply(scheme);
+                break;
+            }
+            case EntryKind.GpuClockLock:
+                if (_gpu is null) throw new InvalidOperationException("no GPU control available to reset the clocks");
+                _gpu.ResetClocks();
                 break;
         }
     }

@@ -36,13 +36,14 @@ public sealed class AppServices
         Reverter = new Reverter(Journal, Registry, Services, Power, Procs, Gpu);
         Tweaks = new TweakEngine(Registry, Services, Power, Journal, Reverter);
         Heat = new HeatGuard(Power, Gpu, Procs, Journal, Reverter, () => Config);
-        Boost = new GameBoost(Procs, Power, Memory, Journal, Reverter, () => Config, Heat);
+        Boost = new GameBoost(Procs, Power, Memory, Journal, Reverter, () => Config, Heat, tuner: new EfficiencyTuner(Power, Gpu, Journal));
         Profiles = new ProfileService(Tweaks);
         Startup = new StartupManager(Registry, Journal, Reverter);
         HealthFixer = new HealthFixer(Tweaks);
         HealthChecks = new IHealthCheck[]
         {
             new PowerPlanCheck(Power, Tweaks.IsApplied),
+            new CpuIdleCheck(Power, Tweaks.IsApplied),
             new GameModeCheck(Registry, Tweaks.IsApplied),
             new GameDvrCheck(Registry, Tweaks.IsApplied),
             new StartupCheck(Startup.List, new ProcessStartupWeigher()),

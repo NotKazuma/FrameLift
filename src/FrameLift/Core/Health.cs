@@ -114,6 +114,34 @@ public sealed class PowerPlanCheck : IHealthCheck
     }
 }
 
+/// <summary>
+/// Some "performance" plans pin the minimum processor state at 100 % and keep idle cores in shallow sleep, so the CPU
+/// runs at full clock and voltage while doing nothing. On a laptop that is heat with no frames to show for it.
+/// </summary>
+public sealed class CpuIdleCheck : IHealthCheck
+{
+    private readonly IPower _power;
+    private readonly Func<string, bool> _tweakApplied;
+    public CpuIdleCheck(IPower power, Func<string, bool> tweakApplied) { _power = power; _tweakApplied = tweakApplied; }
+
+    public string Id => "cpu-rest";
+    public string Title => "CPU at rest";
+
+    public HealthFinding Run()
+    {
+        var scheme = _power.GetActiveScheme();
+        int min = _power.GetSetting(scheme, PowerSettings.SubProcessor, PowerSettings.MinState, true);
+        int promote = _power.GetSetting(scheme, PowerSettings.SubProcessor, PowerSettings.IdlePromote, true);
+        if (min < 90 && promote < 90)
+            return new(Id, Title, HealthStatus.Good, "The CPU can slow down and sleep when it has nothing to do.");
+
+        var why = min >= 90 ? $"Your power plan keeps the CPU at {min}% minimum speed" : "Your power plan keeps idle CPU cores in light sleep";
+        var fix = _tweakApplied("cpu-rest") ? null : new HealthFix("Let the CPU rest", FixKind.ApplyTweak, "cpu-rest");
+        return new(Id, Title, HealthStatus.Problem,
+            why + ", so it runs hot even while doing nothing. Letting it rest leaves full speed for games but cuts idle heat.", fix);
+    }
+}
+
 public sealed class GameModeCheck : IHealthCheck
 {
     private const string Key = @"HKCU\Software\Microsoft\GameBar";
