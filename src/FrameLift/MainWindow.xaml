@@ -1,0 +1,251 @@
+<Window x:Class="FrameLift.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FrameLift" Icon="app.ico" Width="1020" Height="680" MinWidth="860" MinHeight="560"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
+        FontFamily="{StaticResource UiFont}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="16,22,16,16">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
+                    <Border Width="38" Height="38" CornerRadius="11" Background="{StaticResource AccentGradient}">
+                        <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="FrameLift" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="Faster games, safely" Style="{StaticResource MutedText}" FontSize="11.5"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Border Background="{StaticResource Card}" CornerRadius="10" Padding="12,10">
+                        <StackPanel>
+                            <TextBlock x:Name="SidebarStatus" Text="Boost is off" FontWeight="SemiBold" FontSize="13"/>
+                            <TextBlock x:Name="SidebarDetail" Text="Nothing changed on your PC" Style="{StaticResource MutedText}" FontSize="11.5"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <RadioButton x:Name="NavDash" Style="{StaticResource NavButton}" Tag="&#xE80F;" Content="Dashboard" IsChecked="True" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavHealth" AutomationProperties.AutomationId="NavHealth" Style="{StaticResource NavButton}" Tag="&#xE95E;" Content="Health" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavProfiles" Style="{StaticResource NavButton}" Tag="&#xE9D9;" Content="Profiles" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavCleanup" Style="{StaticResource NavButton}" Tag="&#xE74D;" Content="Cleanup" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavTweaks" Style="{StaticResource NavButton}" Tag="&#xE713;" Content="Tweaks" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavStartup" Style="{StaticResource NavButton}" Tag="&#xE7E8;" Content="Startup apps" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavSettings" Style="{StaticResource NavButton}" Tag="&#xE777;" Content="Safety &amp; undo" Checked="Nav_Checked"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Pages -->
+        <Grid Grid.Column="1" Margin="34,28,34,24">
+
+            <!-- Dashboard -->
+            <ScrollViewer x:Name="PageDash" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Dashboard" Style="{StaticResource H1}"/>
+                    <TextBlock Text="One click to give your game every bit of power your PC has." Style="{StaticResource MutedText}" Margin="0,4,0,20"/>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="16" Padding="28" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="HeroTitle" Text="Game Boost is off" FontSize="22" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="HeroText" Style="{StaticResource MutedText}" Margin="0,6,24,0" FontSize="13.5"
+                                           Text="Switches to the High Performance power plan, raises your game's priority, slows background apps and frees standby memory. Everything is put back when you stop."/>
+                                <CheckBox x:Name="AutoBoostCheck" Style="{StaticResource Switch}" HorizontalAlignment="Left" Margin="0,16,0,0"
+                                          Checked="AutoBoost_Changed" Unchecked="AutoBoost_Changed"/>
+                                <TextBlock Text="Start Game Boost automatically when a game goes fullscreen" Style="{StaticResource MutedText}" Margin="56,-22,0,0"/>
+                            </StackPanel>
+                            <Button x:Name="BoostButton" Grid.Column="1" Content="Start Boost" Style="{StaticResource PrimaryButton}"
+                                    Width="170" Height="56" FontSize="16" Click="Boost_Click" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <UniformGrid Columns="3" Margin="0,16,0,0">
+                        <Border Background="{StaticResource Card}" CornerRadius="14" Padding="20" Margin="0,0,8,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="CPU" Style="{StaticResource MutedText}"/>
+                                <TextBlock x:Name="CpuText" Text="0%" FontSize="30" FontWeight="SemiBold" Margin="0,2,0,10"/>
+                                <ProgressBar x:Name="CpuBar" Style="{StaticResource Gauge}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource Card}" CornerRadius="14" Padding="20" Margin="4,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Memory" Style="{StaticResource MutedText}"/>
+                                <TextBlock x:Name="RamText" Text="0%" FontSize="30" FontWeight="SemiBold" Margin="0,2,0,10"/>
+                                <ProgressBar x:Name="RamBar" Style="{StaticResource Gauge}"/>
+                                <TextBlock x:Name="RamDetail" Style="{StaticResource MutedText}" Margin="0,8,0,0" FontSize="11.5"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource Card}" CornerRadius="14" Padding="20" Margin="8,0,0,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="System drive" Style="{StaticResource MutedText}"/>
+                                <TextBlock x:Name="DiskText" Text="0%" FontSize="30" FontWeight="SemiBold" Margin="0,2,0,10"/>
+                                <ProgressBar x:Name="DiskBar" Style="{StaticResource Gauge}"/>
+                                <TextBlock x:Name="DiskDetail" Style="{StaticResource MutedText}" Margin="0,8,0,0" FontSize="11.5"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="14" Padding="20" Margin="0,16,0,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CPU temperature" Style="{StaticResource MutedText}"/>
+                                <TextBlock x:Name="CpuTempText" Text="--" FontSize="26" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="GPU temperature" Style="{StaticResource MutedText}"/>
+                                <TextBlock x:Name="GpuTempText" Text="--" FontSize="26" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0,0,0">
+                                <TextBlock x:Name="HeatTitle" Text="Heat protection" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="HeatText" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="14" Padding="20" Margin="0,16,0,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Quick clean" Style="{StaticResource H2}"/>
+                                <TextBlock x:Name="QuickCleanText" Style="{StaticResource MutedText}" Margin="0,4,0,0" Text="Checking for junk files..."/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Go to Cleanup" Style="{StaticResource GhostButton}" Click="GoCleanup_Click"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Health -->
+            <DockPanel x:Name="PageHealth" Visibility="Collapsed">
+                <StackPanel DockPanel.Dock="Top">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="PC health" Style="{StaticResource H1}"/>
+                            <TextBlock x:Name="HealthSummary" Style="{StaticResource MutedText}" Margin="0,4,0,16"
+                                       Text="What slows this PC down, and a one-click fix where there is one."/>
+                        </StackPanel>
+                        <Button x:Name="HealthRecheck" Grid.Column="1" Content="Check again" Style="{StaticResource GhostButton}"
+                                VerticalAlignment="Top" Click="HealthRecheck_Click"/>
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="HealthHost"/></ScrollViewer>
+            </DockPanel>
+
+            <!-- Profiles -->
+            <DockPanel x:Name="PageProfiles" Visibility="Collapsed">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Profiles" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Pick how far to go. You see every change before it is made, and 'Undo all changes' on the Safety page reverses a whole profile."
+                               Style="{StaticResource MutedText}" Margin="0,4,0,16"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="ProfilesHost"/></ScrollViewer>
+            </DockPanel>
+
+            <!-- Cleanup -->
+            <DockPanel x:Name="PageCleanup" Visibility="Collapsed">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Cleanup" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Delete junk files. Files that are in use are skipped, and nothing outside these folders is touched." Style="{StaticResource MutedText}" Margin="0,4,0,16"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,16,0,0">
+                    <Button x:Name="ScanButton" Content="Scan" Style="{StaticResource GhostButton}" Click="Scan_Click" Width="110"/>
+                    <Button x:Name="CleanButton" Content="Clean selected" Style="{StaticResource PrimaryButton}" Click="Clean_Click" Margin="10,0,0,0"/>
+                    <TextBlock x:Name="CleanStatus" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="CleanupHost"/></ScrollViewer>
+            </DockPanel>
+
+            <!-- Tweaks -->
+            <DockPanel x:Name="PageTweaks" Visibility="Collapsed">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Tweaks" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Each switch can be turned back off at any time. Hover a tweak to see exactly what it changes." Style="{StaticResource MutedText}" Margin="0,4,0,14"/>
+                    <WrapPanel x:Name="TweakTabs" Margin="0,0,0,14"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="TweaksHost"/></ScrollViewer>
+            </DockPanel>
+
+            <!-- Startup -->
+            <DockPanel x:Name="PageStartup" Visibility="Collapsed">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Startup apps" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Apps that launch when Windows starts. Turning one off doesn't uninstall it." Style="{StaticResource MutedText}" Margin="0,4,0,16"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="StartupHost"/></ScrollViewer>
+            </DockPanel>
+
+            <!-- Safety -->
+            <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Safety &amp; undo" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Every change is written to a journal first, so it can always be undone." Style="{StaticResource MutedText}" Margin="0,4,0,20"/>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="14" Padding="22" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Undo everything" Style="{StaticResource H2}"/>
+                            <TextBlock x:Name="UndoText" Style="{StaticResource MutedText}" Margin="0,4,0,14"/>
+                            <Button Content="Undo all changes" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Click="UndoAll_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="14" Padding="22" Margin="0,14,0,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="System restore point" Style="{StaticResource H2}"/>
+                            <TextBlock Text="A Windows snapshot you can roll the whole PC back to. Windows allows one every 24 hours, and System Protection must be on."
+                                       Style="{StaticResource MutedText}" Margin="0,4,0,14"/>
+                            <Button Content="Create restore point now" Style="{StaticResource GhostButton}" HorizontalAlignment="Left" Click="RestorePoint_Click"/>
+                            <TextBlock x:Name="RestoreStatus" Style="{StaticResource MutedText}" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{StaticResource Card}" CornerRadius="14" Padding="22" Margin="0,14,0,0" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Game Boost options" Style="{StaticResource H2}"/>
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="Switch to the High Performance power plan"/>
+                                <CheckBox x:Name="OptPower" Style="{StaticResource Switch}" HorizontalAlignment="Right" Click="Option_Click"/>
+                            </Grid>
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="Free standby memory when boosting"/>
+                                <CheckBox x:Name="OptMemory" Style="{StaticResource Switch}" HorizontalAlignment="Right" Click="Option_Click"/>
+                            </Grid>
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="Ease off when the PC gets too hot while boosting"/>
+                                <CheckBox x:Name="OptHeat" AutomationProperties.AutomationId="OptHeat" Style="{StaticResource Switch}" HorizontalAlignment="Right" Click="Option_Click"/>
+                            </Grid>
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="Also pause the game for a moment at critical heat"/>
+                                <CheckBox x:Name="OptSuspend" AutomationProperties.AutomationId="OptSuspend" Style="{StaticResource Switch}" HorizontalAlignment="Right" Click="Option_Click"/>
+                            </Grid>
+                            <TextBlock Text="Easing off lowers the CPU and GPU power limits and puts them back when it cools down. Pausing can disconnect online games, so it is off by default."
+                                       Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0" FontSize="11.5"/>
+                            <TextBlock Text="Never slow down these apps (one name per line, no .exe)" Style="{StaticResource MutedText}" Margin="0,18,0,6"/>
+                            <TextBox x:Name="IgnoreBox" AcceptsReturn="True" Height="90" Background="{StaticResource Panel}" Foreground="{StaticResource Text}"
+                                     BorderBrush="{StaticResource Line}" Padding="8" FontFamily="Consolas" LostFocus="Ignore_LostFocus"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <Product>FrameLift</Product>
+    <AssemblyName>FrameLift</AssemblyName>
+    <RootNamespace>FrameLift</RootNamespace>
+    <Authors>Afif Aiman</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF's implicit usings leave out System.IO -->
+    <Using Include="System.IO" />
+    <!-- WinForms is only here for the tray icon; its implicit usings would make Application, MessageBox, Button... ambiguous -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <Resource Include="app.ico" />
+  </ItemGroup>
+
+</Project>
